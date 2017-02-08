@@ -1,0 +1,181 @@
+---
+title: "Task 03: Simple operations, data structures and subsetting"
+date: 18 Jan 2017
+author: Drew Steen
+
+# Resources
+* [An Introduction to R](https://cran.r-project.org/doc/manuals/r-release/R-intro.pdf "R Introduction") by the R Core Team
+* AR Chapter 2-3
+* R4DS Chapter 9-10, dealing with *tibbles*. As a practical matter we'll work mostly with *tibbles*, but to get there we need to have a good understanding of vectors, lists and data frames.
+
+# Tasks
+
+## Simple operations and data structures: AR Chapter 2
+* Explore vectorization. Explain the differences and the similarities between the following code snippets. What data structure are `a`, `b`, and `c`?
+```
+a <- 1
+b <- 2
+c <- a + b
+```  
+
+<span style="color:red">#### **ANSWER: `a`, `b`, and `c` are all vectors. `a` and b` are both of length 1 and `c` is of length 2.**</span>
+
+
+and 
+```
+set.seed(0) # This ensures that 'random' results will be the same for everyone
+d <- rnorm(20)
+e <- rnorm(20)
+f <- d + e
+```
+
+<span style="color:red">#### **ANSWER: `d` and `e` are each vectors of 20 random numbers selected from a normal distribution. When the two vectors are added, each element in one vector is added to the same element of the other vector, producing `f`, another vector of 20 elements.**</span>
+
+* In my opinion, R's ability to assign attributes to objects is enormously helpful. 
+    * Name three ways you could use attributes to make data analysis code more reproducible (i.e., easier for yourself and others to understand).  
+<span style="color:red">#### **ANSWER: 1) Include units as a property of columns. 2) Include comments to describe peculiarities in data. 3) Structure data in an understandable way.**</span>  
+     * Create a vector of length 5, and use the `attr` function to associate two different attributes to the vector  
+<span style="color:red">#### **ANSWER:**</span>  
+```{r}
+birds <- c("cardinal","phoebe","bluebird","robin","wren")
+attr(birds,"dim") <- c(5,1)
+attr(birds,"comment") <- "these are types of birds"
+str(birds)
+```
+    
+* AR exercises:
+    * 2.2.2.2 (that is, question 2 in section 2.2.2): "What happens to a factor when you modify its levels?"
+```
+f1 <- factor(letters)
+levels(f1) <- rev(levels(f1))
+```  
+<span style="color:red">#### **ANSWER: The vector responds to changes in the levels. For example, when the levels are reversed, the factors are too. See below.**</span>  
+    ```{r}
+    f1 <- factor(letters)
+    levels(f1) <- rev(levels(f1))
+    f1
+    ```
+    * 2.2.2.3: What does this code do?
+```
+f2 <- rev(factor(letters))
+f3 <- factor(letters, levels = rev(letters))
+```  
+<span style="color:red">#### **ANSWER: It reverses the order of the levels for the factor. Because the reversed levels are saved as a facter with the correctly ordered letters, the vector of factors remains correctly ordered. This just changes the integer value associated with each level. See below.**</span>  
+    ```{r}
+    f2 <- rev(factor(letters))
+    f3 <- factor(letters, levels = rev(letters))
+    factor(letters)
+    as.numeric(factor(letters))
+    f3
+    as.numeric(f3)
+    ```
+
+    * 2.3.1.1: What does `dim` return when applied to a vector, **and why**?  
+    <span style="color:red">#### **ANSWER: `dim` returns `NULL` when applied to a vector, because the vector is unstructured and `dim` refers to "dimensions." See below.**</span>  
+    ``` {r}
+    dim(c(1,2,3,4))
+    ```  
+    
+    * 2.4.5.1: What attributes does a data frame possess?  
+<span style="color:red">#### **ANSWER: Class, column names, row names.**</span>  
+
+    * 2.4.5.2: What does `as.matrix()` do when applied to a data frame with columns of different types?  
+<span style="color:red">#### **ANSWER: It converts the data to a single type.**</span>  
+
+    * 2.4.5.3: Can you have a data frame with 0 rows? What about 0 columns?  
+<span style="color:red">#### **ANSWER: Yes, see below.**</span>  
+    ```{r}
+    data.frame()
+    ```
+
+## Simple operations
+* **Read in your own data and figure out what type it is**.
+    * Use `read.csv()` to read the file `2016_10_11_plate_reader.csv` in the github `data` directory, and store it in memory as an object. This is an output from an instrument that I have, that measures fluorescence in each well of a 96-well plate. (Hint: use the optional argument `skip = 33`. What effect does that have?)  
+    <span style="color:red">#### **ANSWER: The argument `skip = 33` starts reading in the .csv file after line 33, where the data actually begins. See below.**</span>  
+    ```{r}
+    github.data <- RCurl::getURL("https://raw.githubusercontent.com/adsteen/GEOL590_2017/master/data/2016_10_11_plate_reader.csv")
+    plate_reader <- read.csv(text = github.data)
+    plate_reader_skip33 <- read.csv(text = github.data, skip = 33)
+    head(plate_reader)
+    head(plate_reader_skip33)
+    ```
+    
+    * What kind of object did you create? What data type is each column of that object? (`str()`)  
+    <span style="color:red">#### **ANSWER: This creates a data frame with three columns: `$well` is composed of factors, `$voltage` is numeric, and `$r.squared` is composed of integers. See below.**</span>  
+    ```{r}
+    github.data <- RCurl::getURL("https://raw.githubusercontent.com/adsteen/GEOL590_2017/master/data/2016_10_11_plate_reader.csv")
+    plate_reader <- read.csv(text = github.data, skip = 33)
+    str(plate_reader)
+    ```
+    
+    * Now install and load the **tidyverse** package. (Remember, this package is a little unusual - it is a wrapper for about a dozen interrelated packages. Here you're using the **readr** package)  
+    
+    * Read the same file using the `read_csv` function. How is the resulting object different?  
+    <span style="color:red">#### **ANSWER: The object now takes three different classes: data frame, tbl, and tbl_df. The column classes are character, numeric, and integer. See below.**</span>  
+    ```{r}
+    library(readr)
+    plate_reader <- read_csv("https://raw.githubusercontent.com/adsteen/GEOL590_2017/master/data/2016_10_11_plate_reader.csv",skip = 33)
+    head(plate_reader)
+    str(plate_reader)
+    ```
+
+## Subsetting
+Note that `mtcars` is a data set that comes with R. You don't have to do anything special to load it into memory.  
+
+* Why does `nrow(mtcars)` give a different result than `length(mtcars)`? What does `ncol(mtcars)` return? What is each telling you, and why?  
+<span style="color:red">#### **ANSWER: The `length()` function is just returning the number of elements in each row, while `nrow()` is returning the number of rows. `ncol()` returns the number of columns.**</span>  
+    ```{r}
+    head(mtcars)
+    nrow(mtcars)
+    length(mtcars)
+    ncol(mtcars)
+    ```
+* Create a vector that is the `cyl` column of `mtcars` in two different ways:  
+    * using the `$` operator  
+    <span style="color:red">#### **ANSWER: See below.**</span>  
+    ```{r}
+    cyl.vector <- mtcars$cyl
+    cyl.vector
+    class(cyl.vector)
+    ```
+    * using `[]` subsetting  
+    <span style="color:red">#### **ANSWER: Important to notice difference between `["cyl"]` and `[,2]`. See below.**</span>  
+    ```{r}
+    cyl.vector <- mtcars["cyl"]
+    cyl.vector
+    class(cyl.vector)
+    cyl.vector <- mtcars[,2]
+    cyl.vector
+    class(cyl.vector)
+    ```
+* Create a data frame that contains all the columns of `mtcars`, but only with cars that weigh less than 3.0 **OR** more than 4.0 (weight is in the `wt` column)  
+<span style="color:red">#### **ANSWER: See below.**</span>  
+```{r}
+my_data_frame <- mtcars[as.logical((mtcars$wt > 4) + (mtcars$wt < 3)),]
+head(my_data_frame)
+```  
+* Create a data frame that contains all the **rows** of `mtcars`, but only the `mpg` and `wt`  
+<span style="color:red">#### **ANSWER: See below.**</span>  
+```{r}
+my_data_frame <- mtcars[,c(-1,-6)]
+head(my_data_frame)
+```  
+* Which cars in the database get gas mileage (`mpg`) equal to the median gas mileage for the set? (Use `median` and `which`).  
+<span style="color:red">#### **ANSWER: See below.**</span>  
+```{r}
+mtcars[mtcars$mpg == median(mtcars$mpg),]
+```
+* AR 3.1.7.1: Fix the following common subsetting errors (note that `mtcars` is a dataset that is built into base R; you don't have to do anything special to load it:  
+```
+mtcars[mtcars$cyl = 4, ] # Trying to create a data frame of cars with 4 cylinders only
+mtcars[-1:4, ]
+mtcars[mtcars$cyl <= 5]
+mtcars[mtcars$cyl == 4 | 6, ] # The | is an 'or' operator - you want a data frame of cars with 4 OR 6 cylinder engines
+```  
+<span style="color:red">#### **ANSWER: **</span>  
+```{r}
+head(mtcars[mtcars$cyl == 4, ]) # Trying to create a data frame of cars with 4 cylinders only
+head(mtcars[-1:-4, ])
+head(mtcars[mtcars$cyl <= 5,])
+head(mtcars[mtcars$cyl == 4 | mtcars$cyl == 6, ]) # The | is an 'or' operator - you want a data frame of cars with 4 OR 6 cylinder engines
+```
