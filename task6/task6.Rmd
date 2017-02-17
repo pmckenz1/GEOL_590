@@ -1,0 +1,105 @@
+---
+title: "Tree Beta Diversity"
+author: "Patrick McKenzie"
+date: "February 17, 2017"
+output:
+  github_document: default
+sansfont: Times New Roman
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+```{r echo=F}
+suppressMessages(suppressWarnings(library(ecodist)))
+suppressMessages(suppressWarnings(library(vegan)))
+suppressMessages(suppressWarnings(library(ggplot2)))
+suppressMessages(suppressWarnings(library(extrafont)))
+suppressMessages(suppressWarnings(tree_div<-read.table("TreeData.txt")))
+suppressMessages(suppressWarnings(site.data<-read.csv("WFSiteData.csv")))
+suppressMessages(suppressWarnings(mast.site.data<-read.csv("COMPLETE_CNH_MasterData.csv")))
+```
+## Introduction
+The data consists of 27 protected sites. There are 20 random points in each site and 10 nearest trees sampled around each point.
+
+*  Here are the sites:
+```{r echo=F}
+as.character(unique(tree_div$Site))
+```
+
+*  Here is a sample of how the **tree** data is arranged.
+```{r echo=F}
+treedf <- cbind(as.character(tree_div$Site),as.character(tree_div$Point),as.character(tree_div$NAME),as.character(tree_div$Latitude),as.character(tree_div$Longitude))
+treedf <- as.data.frame(treedf,stringsAsFactors = F)
+colnames(treedf) <- c("Site","Point","Species","Latitude","Longitude")
+head(treedf)
+```
+*  Here is a sample of how the **site** data is arranged.
+```{r echo=F}
+sitedf <- cbind(as.character(mast.site.data$Site),as.character(mast.site.data$Latitude),as.character(mast.site.data$Elev),as.character(mast.site.data$tmax),as.character(mast.site.data$tmin))
+sitedf <- as.data.frame(sitedf,stringsAsFactors = F)
+colnames(sitedf) <- c("Site","Latitude","Elevation","TempMax","TempMin")
+
+head(sitedf[(sitedf$Site == "TNPickett"),])
+```
+
+## Methods
+
+*  First, a richness value was determined for each site.
+    *  For the sake of simplicity, richness will be measured as the number of tree species present in each site. Various other methods for assessing biodiversity exist that could account for species rarity, etc.
+*  The code for this is simple:
+```{r}
+site.names <- unique(treedf$Site) #Makes a vector of site names from our full "sitedf" data frame
+richnesses <- character(0) #Makes an empty object to store our richness values
+for (i in 1:length(site.names)) {
+  trees.in.site <- treedf[(treedf$Site == site.names[i]),"Species"] #collects names of all 200 trees in the site
+  species.in.site <- unique(trees.in.site) #collects the species included in the 200-tree subset
+  site.richness <- length(species.in.site) #saves the number of species in the site
+  richnesses <- c(richnesses,site.richness) #combines the number of species in each site together in a vector
+}
+analysis_df <- as.data.frame(cbind(as.character(site.names),as.numeric(richnesses)),stringsAsFactors = F) #combines site names with their richnesses into a data frame
+colnames(analysis_df) <- c("Site","Richness")
+class(analysis_df)
+analysis_df
+```
+*  I'm interested in seeing the relationship between latitude and richness in these sits, so I also need a "Latitude" column. I'm going to take the average latitude for the points in each site.
+```{r}
+for (i in 1:length(site.names)) {
+latitudes <- sitedf[(sitedf$Site == site.names[i]),"Latitude"]
+analysis_df$Latitude[i] <- mean(as.numeric(latitudes))
+}
+for (i in 1:length(site.names)) {
+elevations <- sitedf[(sitedf$Site == site.names[i]),"Elevation"]
+analysis_df$Elevation[i] <- mean(as.numeric(elevations))
+}
+head(analysis_df)
+```
+*  Now we can plot it!
+```{r}
+ggplot(analysis_df, aes(Elevation,as.numeric(Richness))) + 
+  geom_point() + 
+  geom_smooth(method = "lm", formula = y ~ x) +
+  ggtitle("Richness vs. Elevation") +
+  xlab("Elevation (m)") + 
+  ylab("Richness") +
+  theme(text=element_text(family="Arial"))
+  
+ggplot(analysis_df, aes(Latitude,as.numeric(Richness))) + 
+  geom_point() + 
+  geom_smooth(method = "lm", formula = y ~ x) +
+  ggtitle("Richness vs. Latitude") +
+  xlab("Latitude") + 
+  ylab("Richness") +
+theme(text=element_text(family="Arial"))
+```
+
+
+##Discussion
+
+As shown in the above graphs, we expect a negative relationship between **elevation** and tree species richness and between **latitude** and tree species richness.
+
+*  At high-elevation and high-latitude sites, we expect fewer tree species.
+
+This relationship might change, though, if we were instead interested in rare species.
+
+*  Future studies could use a different metric for biodiversity or could instead investigate diversity partitioning between sites.
