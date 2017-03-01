@@ -1,0 +1,108 @@
+---
+title: 'COMPLETED: Task 07, dplyr'
+author: "Patrick McKenzie"
+date: "28 February 2017"
+output: pdf_document
+---
+
+# Resources
+* R Studio's Data Wrangling Cheat Sheet. List of all R Studio cheat sheets [here](https://www.rstudio.com/resources/cheatsheets/)
+* R for Data Science: Chapter 5, 9-12
+* Wickham (2014) [Tidy Data](http://vita.had.co.nz/papers/tidy-data.pdf)
+* The [dplyr vignette](https://cran.rstudio.com/web/packages/dplyr/vignettes/introduction.html)
+* Regular expressions guide - there are many quickstart guides and cheat sheets on the web. I think [this one](http://stat545.com/block022_regular-expression.html) is pretty good.
+
+## Notes on built-in datasets
+It makes sense to practice **dplyr** using large-ish data sets, since **dplyr** is designed handle big(ish) data. Because those data sets make the package file size considerably bigger, they are distributed in packages of related data sets. To use the data sets, simply install and load them as you would with a regular pacakge. So, for instance:
+
+```
+install.packages("nycflights13")
+library(nycflights)
+```
+```{r include = FALSE}
+library(nycflights13)
+library(babynames)
+library(dplyr)
+library(ggplot2)
+library(tidyr)
+```
+
+
+We will be using two data packages: **nycflight13** and **babynames**. **nycflights13** contains the five distinct data sets:
+
+* airlines
+* airports
+* flights
+* planes
+* weather
+
+# Tasks
+
+**All tasks should be done, to the extent possible, using tidyverse syntax including piping and functions.**
+
+
+
+* Using the `nycflights13::weather`:
+    * Determine whether there are any clear outliers in wind speed (`wind_speed`) that should be rejected. If so, filter those bad point(s) and proceed.
+    * What direction has the highest median speed at each airport? Make a table and a plot of median wind speed by direction, for each airport. *Optional fun challenge: If you like, this is a rare opportunity to make use of `coord_polar()`.* 
+```{r}
+plot(nycflights13::weather$wind_speed) #Shows one super-high value
+sum(is.na(nycflights13::weather$wind_speed)) #Shows that we have three NA wind speed values
+
+filtered.weather <- nycflights13::weather %>%
+  filter(!(wind_speed > 50 | is.na(wind_speed))) #This removes our outlier and NA values
+summarised_wind <- filtered.weather %>%
+  group_by(origin,wind_dir) %>%
+  summarise(median_wind_speed = median(wind_speed)) #This makes a data frame of median wind speeds by airport and wind direction
+head(summarised_wind)
+highest_med_speeds <- summarised_wind %>%
+  group_by(origin) %>%
+  filter(median_wind_speed == max(median_wind_speed)) #This selects the direction for each airport at which the highest median wind speeds occur
+highest_med_speeds #Here are the directions with the highest median wind speeds at each airport
+
+summarised_wind %>%
+  ggplot(aes(x = wind_dir, y = median_wind_speed,color = origin)) + geom_point()
+```
+
+* Using `nycflights13::flights` and `nycflights13::airlines`:
+    * Make a table with two columns: airline name (not carrier code) and median distance flown from JFK airport. The table should be arranged in order of decreasing mean flight distance. Hint: use a `_join` function to join `flights` and `airlines`.
+```{r}
+table <- (nycflights13::flights[,c("carrier","distance")] %>% 
+  left_join(nycflights13::airlines,by = "carrier"))[,-1] #Makes a tbl of airlines and distances
+head(table)
+summ_table <- table %>%
+  group_by(name) %>%
+  summarise(median.distance = median(distance),mean.distance = mean(distance)) %>%
+  arrange(desc(mean.distance))
+summ_table
+```
+
+* Make a *wide-format* data frame that displays the number of flights that leave Newark ("EWR") airport each month, from each airline
+```{r}
+numflights_table <- nycflights13::flights %>%
+  group_by(month,origin) %>%
+  summarise(number.flights = length(flight)) %>%
+  spread(month,number.flights)
+numflights_table
+```
+
+* Using the **babynames** dataset:
+    * Identify the ten most common male and female names in 2014. Make a plot of their frequency (`prop`) since 1880. (This may require two separate piped statements). 
+    * Make a single table of the 26th through 29th most common girls names in the year 1896, 1942, and 2016
+```{r}
+common_names <- babynames[babynames$year == 2014,] %>% #Selects rows from 2014
+  group_by(sex) %>% #Groups by sex so that we get the top group from each in the next line
+  top_n(10, n) #This gives us a data frame of top 10 names from 2014.
+
+babynames %>%
+  filter(paste0(sex,name) %in% paste0(common_names$sex,common_names$name)) %>% #selects names for each year (with correct sex)
+  ggplot(aes(x = year, y = prop, color = name)) + geom_point()
+
+```
+
+* Write task that involves some of the functions on the Data Wrangling Cheat Sheet and execute it. You may either use your own data or data packages (e.g., the ones listed [here](https://blog.rstudio.org/2014/07/23/new-data-packages/)).
+
+
+
+## Optional challenge
+ Using regular expressions, make a plot of the change in frequency of some letter pattern in names. For instance: how has the frequency of female names ending in "leigh" changed over time relative to names ending in "lee"?
