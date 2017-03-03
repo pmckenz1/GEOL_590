@@ -3,8 +3,8 @@ title: 'COMPLETED: Task 07, dplyr'
 author: "Patrick McKenzie"
 date: "28 February 2017"
 output:
-  html_document: default
   pdf_document: default
+  html_document: default
 ---
 
 # Resources
@@ -83,7 +83,9 @@ summ_table
 * Make a *wide-format* data frame that displays the number of flights that leave Newark ("EWR") airport each month, from each airline
 ```{r}
 numflights_table <- nycflights13::flights %>%
-  group_by(month,origin) %>%
+  left_join(nycflights13::airlines,by = "carrier") %>%
+  filter(origin == "EWR") %>%
+  group_by(month,name) %>%
   summarise(number.flights = length(flight)) %>%
   spread(month,number.flights)
 numflights_table

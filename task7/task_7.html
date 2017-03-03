@@ -248,17 +248,29 @@ summ_table</code></pre>
 <li>Make a <em>wide-format</em> data frame that displays the number of flights that leave Newark (“EWR”) airport each month, from each airline</li>
 </ul>
 <pre class="r"><code>numflights_table &lt;- nycflights13::flights %&gt;%
-  group_by(month,origin) %&gt;%
+  left_join(nycflights13::airlines,by = &quot;carrier&quot;) %&gt;%
+  filter(origin == &quot;EWR&quot;) %&gt;%
+  group_by(month,name) %&gt;%
   summarise(number.flights = length(flight)) %&gt;%
   spread(month,number.flights)
 numflights_table</code></pre>
-<pre><code>## # A tibble: 3 × 13
-##   origin   `1`   `2`   `3`   `4`   `5`   `6`   `7`   `8`   `9`  `10`  `11`
-## *  &lt;chr&gt; &lt;int&gt; &lt;int&gt; &lt;int&gt; &lt;int&gt; &lt;int&gt; &lt;int&gt; &lt;int&gt; &lt;int&gt; &lt;int&gt; &lt;int&gt; &lt;int&gt;
-## 1    EWR  9893  9107 10420 10531 10592 10175 10475 10359  9550 10104  9707
-## 2    JFK  9161  8421  9697  9218  9397  9472 10023  9983  8908  9143  8710
-## 3    LGA  7950  7423  8717  8581  8807  8596  8927  8985  9116  9642  8851
-## # ... with 1 more variables: `12` &lt;int&gt;</code></pre>
+<pre><code>## # A tibble: 12 × 13
+##                        name   `1`   `2`   `3`   `4`   `5`   `6`   `7`
+## *                     &lt;chr&gt; &lt;int&gt; &lt;int&gt; &lt;int&gt; &lt;int&gt; &lt;int&gt; &lt;int&gt; &lt;int&gt;
+## 1      Alaska Airlines Inc.    62    56    62    60    62    60    62
+## 2    American Airlines Inc.   298   268   295   288   297   291   303
+## 3      Delta Air Lines Inc.   279   249   319   364   377   347   340
+## 4         Endeavor Air Inc.    82    75    91    88   103    88    94
+## 5                 Envoy Air   212   196   228   220   226   218   228
+## 6  ExpressJet Airlines Inc.  3838  3480  3996  3870  4039  3661  3747
+## 7           JetBlue Airways   573   532   612   567   517   506   546
+## 8     SkyWest Airlines Inc.    NA    NA    NA    NA    NA     2    NA
+## 9    Southwest Airlines Co.   529   490   532   518   530   501   526
+## 10    United Air Lines Inc.  3657  3433  3913  4025  3874  3931  4046
+## 11          US Airways Inc.   363   328   372   361   381   390   402
+## 12           Virgin America    NA    NA    NA   170   186   180   181
+## # ... with 5 more variables: `8` &lt;int&gt;, `9` &lt;int&gt;, `10` &lt;int&gt;, `11` &lt;int&gt;,
+## #   `12` &lt;int&gt;</code></pre>
 <ul>
 <li>Using the <strong>babynames</strong> dataset:
 <ul>
