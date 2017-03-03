@@ -3,8 +3,8 @@ title: 'COMPLETED: Task 07, dplyr'
 author: "Patrick McKenzie"
 date: "28 February 2017"
 output:
-  pdf_document: default
   html_document: default
+  pdf_document: default
 ---
 
 # Resources
@@ -101,7 +101,7 @@ common_names <- babynames[babynames$year == 2014,] %>% #Selects rows from 2014
 
 babynames %>%
   filter(paste0(sex,name) %in% paste0(common_names$sex,common_names$name)) %>% #selects names for each year (with correct sex)
-  ggplot(aes(x = year, y = prop, color = name)) + geom_point() #Plots frequencies since 1880.
+  ggplot(aes(x = year, y = prop, color = name)) + geom_line() #Plots frequencies since 1880.
 
 #########################################################
 filtered_df <- babynames %>%
@@ -138,3 +138,27 @@ Kville_area_data %>%
 
 ## Optional challenge
  Using regular expressions, make a plot of the change in frequency of some letter pattern in names. For instance: how has the frequency of female names ending in "leigh" changed over time relative to names ending in "lee"?
+ 
+```{r}
+substrRight <- function(x, n){
+  substr(x, nchar(x)-n+1, nchar(x))
+} #Stole this nice function from StackOverflow http://stackoverflow.com/questions/7963898/extracting-the-last-n-characters-from-a-string-in-r
+
+leighnames <- babynames %>%
+  filter(sex == "F") %>%
+  filter(substrRight(name,5) == "leigh") %>%
+  group_by(year) %>%
+  summarise(leigh = length(name)) %>%
+  gather(ending,number,-year) #This builds a tibble of names with "leigh" endings.
+babynames %>%
+  filter(sex == "F") %>%
+  filter(substrRight(name,3) == "lee") %>%
+  group_by(year) %>%
+  summarise(lee = length(name)) %>%
+  gather(ending,number,-year) %>%
+  bind_rows(leighnames) %>%
+  ggplot(aes(x = year,y = number, color = ending)) + geom_line()
+
+```
+
+
