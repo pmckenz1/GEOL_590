@@ -2,7 +2,9 @@
 title: 'COMPLETED: Task 07, dplyr'
 author: "Patrick McKenzie"
 date: "28 February 2017"
-output: pdf_document
+output:
+  html_document: default
+  pdf_document: default
 ---
 
 # Resources
@@ -25,6 +27,7 @@ library(babynames)
 library(dplyr)
 library(ggplot2)
 library(tidyr)
+library(nasaweather)
 ```
 
 
@@ -96,11 +99,38 @@ common_names <- babynames[babynames$year == 2014,] %>% #Selects rows from 2014
 
 babynames %>%
   filter(paste0(sex,name) %in% paste0(common_names$sex,common_names$name)) %>% #selects names for each year (with correct sex)
-  ggplot(aes(x = year, y = prop, color = name)) + geom_point()
+  ggplot(aes(x = year, y = prop, color = name)) + geom_point() #Plots frequencies since 1880.
 
+#########################################################
+filtered_df <- babynames %>%
+  filter(year %in% c("1896", "1942","2014")) %>%
+  filter(sex == "F") #This pulls out girls' names from the three years
+
+girlsnames <- integer(0)
+for (i in c("1896","1942","2014")) {
+  girlsnames <- rbind(girlsnames,(filtered_df %>%
+                    filter(year == i))[26:29,]) #this selects rows 26-29 from each year
+}
+girlsnames
 ```
 
 * Write task that involves some of the functions on the Data Wrangling Cheat Sheet and execute it. You may either use your own data or data packages (e.g., the ones listed [here](https://blog.rstudio.org/2014/07/23/new-data-packages/)).
+
+**Plot average temperature per year for the area within five degrees of latitude/longitude of Knoxville.**
+
+```{r}
+atmos_data <- nasaweather::atmos
+Kville.lon.lat <- ggmap::geocode("Knoxville")
+Kville_area_data <- atmos_data %>%
+  filter(long > (Kville.lon.lat$lon-5) & long < (Kville.lon.lat$lon+5) &
+           lat > (Kville.lon.lat$lat-5) & lat < (Kville.lon.lat$lat+5))
+Kville_area_data %>%
+  group_by(year,month) %>%
+  summarise(temp = mean(temp)) %>%
+  ggplot(aes(x=month,y=temp,color=as.factor(year))) + geom_line(size = 1.5) + scale_colour_manual(values=c("#fee5d9","#fcbba1","#fc9272","#fb6a4a","#de2d26","#a50f15"))
+
+
+```
 
 
 
