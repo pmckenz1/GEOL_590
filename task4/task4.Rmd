@@ -1,0 +1,68 @@
+---
+title: "Task 4: ggplot2"
+author: "Patrick McKenzie"
+date: "February 3, 2017"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# Tasks
+* Find a plot in a published paper or scientific book. Evaluate it based on the principles Tufte lays out in the required reading.  
+<span style="color:red"> **Getting to this next.** </span>  
+* **Create a single, well-commented script** (or R Notebook, if you know how to do that) that does the following:  
+* Determine how many rows the `diamonds` data set that comes loaded with **ggplot2** has. <span style="color:red"> **Done below.** </span>
+```{r, echo = F}
+suppressWarnings(library(ggplot2))
+```
+```{r} 
+print(nrow(diamonds))
+```
+* Use the following code to create a reproducible subset of `diamonds`. *Explain each line of the code in words*. <span style="color:red"> **Done below.** </span>
+```{r}
+set.seed(1410) #This allows us to reproduce the otherwise random set of draws by the "sample" function
+dsmall <- diamonds[sample(nrow(diamonds), 100), ] #the sample function is making a random draw of 100 row numbers from the `diamonds` data set. The bracketed part is then calling these rows from the `diamonds` data set, and these rose are saved in the object "dsmall"
+```
+* Use `dsmall` to create the following plots:
+    * A scatterplot of `y` vs `x`, colored by z values and faceted by `cut`. <span style="color:red"> **Done below.** </span>
+```{r}
+ggplot(data = dsmall,aes(x=x,y=y,color=z)) + 
+  geom_point() + 
+  facet_wrap(~ cut)
+```  
+
+* A scatterplot of `price` vs `carat`, colored by `cut` and smoothed (using the `"lm"` method, without standard error bars). <span style="color:red"> **Done below.** </span>  
+```{r}
+ggplot(data = dsmall,aes(carat,price,color=cut)) + 
+  geom_point() + 
+  geom_smooth(method = "lm",se=F)
+```  
+
+* A density plot of `carat`, faceted and colored by `clarity`. <span style="color:red"> **Done below.** </span>
+```{r}
+ggplot(data = dsmall, aes(carat, color = clarity)) + 
+  geom_density() + 
+  facet_wrap(~ clarity)
+```  
+
+* A boxplot of `price` as a function of `cut`. <span style="color:red"> **Done below.** </span>
+```{r}
+ggplot(data = dsmall, aes(cut,price)) + 
+  geom_boxplot()
+```  
+
+* A scatterplot of `y` versus `x`. The points should be red (`colour = "red")`, the color of the smoothing line should be blue (`colour = "blue"`), and the line should be dashed with fat dashes (`linetype=2`). The x and y labels should be set manually as well. *The trickiest part of this may be to figure out where `colour = "red"` etc should go in the code. Think about mapped vs static aesthetic values.* <span style="color:red"> **Done below.** </span>
+```{r}
+ggplot(data = dsmall, aes(x,y)) + 
+  geom_point(color = "red") + 
+  geom_smooth(method = "lm",se = T, color = "blue",linetype=2) +
+  labs(x = "x, in mm", y = "y, in mm")
+```
+
+## Ugly plot contest:
+Make the worst plot you possibly can in ggplot2. This plot should be awful in two independent respects:
+    *  It should represent the data misleadingly (this can sometimes be difficult with ggplot2, but be creative)
+    *  It should be as ugly as possible. (`theme` will be helpful here.)
+**Print this plot out and bring it in on Friday. We'll make a gallery of bad plots and the 'winner' will get a prize.
