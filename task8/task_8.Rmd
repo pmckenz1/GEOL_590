@@ -1,0 +1,88 @@
+---
+title: "Task 8"
+author: "Patrick McKenzie"
+date: "March 10, 2017"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+```{r include = FALSE}
+library(dplyr)
+library(nycflights13)
+```
+
+# Resources
+* Advanced R chapters 6, 9 - 11
+* R for Data Science chapters 14-17
+* [This blog post](http://mazamascience.com/WorkingWithData/?p=912) about the `tryCatch() function`
+
+# Tasks
+
+# Function tasks
+* Complete this task by creating an R notebook (.Rmd file) and accompanying .md file
+## Functions and error handling:
+Write a function that fulfills the following criteria:
+* It should be tidyverse compatible (i.e., the first argument must be a data frame)
+* It should add two arbitrary columns of the data frame (specified by the user) and put them in a new column of that data frame, with the name of the new column specified by the user
+* It should throw an informative warning if any invalid arguments are provided. Invalid arguments might include:
+    * The first argument is not a data frame
+    * Less than two valid columns are specified to add (e.g., one or both of the column names isn't in the supplied data frame) 
+    * The columns specified are not numeric, and therefore can't be added - use `tryCatch()` for this
+* If the columns to add aren't valid but the new column name is, the function should create a column of NA values
+```{r}
+add_two_columns <- function(data, column.headings, new.column.name = NULL) {
+if (is.data.frame(data) == FALSE) {
+  stop("First argument must be a data frame.")
+}
+if (length(column.headings) != 2) {
+  stop("Argument that is a vector of two column names must be provided.")
+}
+if (is.tbl(data)) {
+  stop("Your data is a tbl! Don't use tbls -- just use as.data.frame() and make everything easier.")
+}
+col1 <- data[,column.headings[1]]
+col2 <- data[,column.headings[2]]
+if (is.numeric(col1) && is.numeric(col2)) {
+  newcol <- col1  + col2
+  dim(newcol) <- c(length(newcol),1)
+  if (length(new.column.name) == 1) {
+    colnames(newcol) <- new.column.name
+  }
+  else {
+    colnames(newcol) <- "new.column"
+  }
+  cbind.data.frame(data,newcol)
+}
+else {
+  if (length(new.column.name == 1)) {
+    warning("Columns specified are not numeric, returning column of NA values.")
+    na.column <- rep(NA, nrow(data))
+    dim(na.column) <- c(length(na.column),1)
+    colnames(na.column) <- new.column.name
+    cbind.data.frame(data,na.column)
+  }
+  else {
+    stop("Columns specified are not numeric and column name not provided.")
+  }
+}
+}
+exampledf <- as.data.frame(nycflights13::flights)
+example <- add_two_columns(exampledf,c("air_time","distance"),"my.new.column")
+head(example)
+```
+
+## Loop and performance metric tasks
+* Write a function named that uses a for loop to calculate the sum of the elements of a vector, which is passed as an argument (i.e., it should do the same thing that `sum()` does with vectors). `your_fun(1:10^4)` should return 50005000.
+* Use the `microbenchmark::microbenchmark` function to compare the performace of your function to that of `sum` in adding up the elements of the vector `1:10^4`. The benchmarking code should look something like:
+```
+test.vec <- 1:10^4
+microbenchmark(
+    my_sum(test.vec),
+    sum(test.vec)
+    )
+```
+Is there a difference? Why?
+
+    
