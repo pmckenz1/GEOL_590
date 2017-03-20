@@ -11,6 +11,7 @@ knitr::opts_chunk$set(echo = TRUE)
 ```{r include = FALSE}
 library(dplyr)
 library(nycflights13)
+library(microbenchmark)
 ```
 
 # Resources
@@ -40,36 +41,36 @@ if (length(column.headings) != 2) {
   stop("Argument that is a vector of two column names must be provided.")
 }
 if (is.tbl(data)) {
-  stop("Your data is a tbl! Don't use tbls -- just use as.data.frame() and make everything easier.")
+  stop("Your data is a tbl! I hate tbls -- just use as.data.frame() and make everything easier.")
 }
-col1 <- data[,column.headings[1]]
-col2 <- data[,column.headings[2]]
+col1 <- data[,column.headings[1]] #creates vector of the first column
+col2 <- data[,column.headings[2]] #creates vector of the second column
 if (is.numeric(col1) && is.numeric(col2)) {
-  newcol <- col1  + col2
-  dim(newcol) <- c(length(newcol),1)
+  newcol <- col1  + col2          #the new column is sum of the two
+  dim(newcol) <- c(length(newcol),1) #giving it row dimensions
   if (length(new.column.name) == 1) {
-    colnames(newcol) <- new.column.name
+    colnames(newcol) <- new.column.name #if name is provided, that's the column name
   }
   else {
-    colnames(newcol) <- "new.column"
+    colnames(newcol) <- "new.column" #If name not provided, we're calling it "new.column"
   }
-  cbind.data.frame(data,newcol)
+  cbind.data.frame(data,newcol) #Boom, new data frame is returned
 }
-else {
-  if (length(new.column.name == 1)) {
+else {                           #The following is if the columns AREN'T numeric
+  if (length(new.column.name == 1)) {          #This is if the user supplies a column name.
     warning("Columns specified are not numeric, returning column of NA values.")
-    na.column <- rep(NA, nrow(data))
-    dim(na.column) <- c(length(na.column),1)
-    colnames(na.column) <- new.column.name
-    cbind.data.frame(data,na.column)
+    na.column <- rep(NA, nrow(data))           #Makes a vector of NA values
+    dim(na.column) <- c(length(na.column),1)   #Gives our vector dimensions of a column
+    colnames(na.column) <- new.column.name     #Gives our NA column the name provided
+    cbind.data.frame(data,na.column)           #Boom, new data frame is returned
   }
   else {
-    stop("Columns specified are not numeric and column name not provided.")
+    stop("Columns specified are not numeric and column name not provided.") #If non-numeric columns and no column name.
   }
 }
 }
 exampledf <- as.data.frame(nycflights13::flights)
-example <- add_two_columns(exampledf,c("air_time","distance"),"my.new.column")
+example <- add_two_columns(exampledf,c("air_time","distance"),"my.new.column") #making a new column that is the sum of air_time and distance
 head(example)
 ```
 
@@ -83,6 +84,24 @@ microbenchmark(
     sum(test.vec)
     )
 ```
-Is there a difference? Why?
+```{r}
+my_sum <- function(vector) {
+added <- 0                     #Starting a numeric vector that we'll just add stuff to.
+for (i in 1:length(vector)) {  #Looping once for each element of the vector.
+  added <- added + vector[i]   #Each loop adds the next value of the vector to the sum of the previous values.
+}
+added                          #This returns our summed value.
+}
+my_sum(1:10^4)
+
+microbenchmark(
+  my_sum(1:10^4),
+  sum(1:10^4)
+)
+```
+
+Is there a difference? Why?  
+*Yes, my_sum() uses a for() loop. These are notoriously slow, even for R. Meanwhile, sum() -- a function in base package -- isn't even written in R. I think it's written S? Either way, it's clearly doing something more efficient.*  
+
 
     
